@@ -43,10 +43,9 @@ ping 172.17.0.3
 ![Illustration Video 1](https://user-images.githubusercontent.com/1917513/93758395-fdc8b480-fc25-11ea-9703-a0c25870d2b0.gif)
 
 ### Sections
-[DNS](https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/dns.md)
 
 <details>
-<summary> DNS Outline </summary>
+<summary> [DNS](https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/dns.md) </summary>
 <p>
 
 - Domain Names
