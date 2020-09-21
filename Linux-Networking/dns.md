@@ -112,6 +112,19 @@ dns1.p09.nsone.net.
 dig www.linkedin.com CNAME +short
 2-01-2c3e-005a.cdx.cedexis.net.
 ```
+Armed with these fundamentals of DNS lets see usecases where DNS is used by SREs.
+
+## SRE Usecases
+
+1. Every company has to have their internal DNS infrastructure for intranet sites and internal services like databases and stuff. So there has to be a DNS infra maintained for those domain names by the infrastructure team. This DNS infra has to be optimized and scaled so that it doesn’t become a single point of failure. Failure of the internal DNS infrastructure can cause API calls of microservices to fail and other cascading effect.
+2. DNS can also be used for discovering services. For example the hostname serviceb.internal.example.com could list instances which run serviceb internally in example.com company. Cloud providers provide options to enable DNS discovery([example](https://docs.aws.amazon.com/whitepapers/latest/microservices-on-aws/service-discovery.html#dns-based-service-discovery))
+3. DNS is used by cloud providers and CDN providers to scale their services. In Azure/AWS, Load Balancers are given a CNAME instead of IPAddress. They update the IPAddress of the Loadbalancers as they scale by changing the IP Address of alias domain names. This is one of the reasons why A records of such alias domains (Eg www-linkedin-com.l-0005.l-msedge.net. above) are short lived like 1 minute.
+4. DNS can also be used to make clients get IP addresses closer to their location so that their HTTP calls can be responded faster if the company has a presence geographically distributed. 
+5. SRE also has to understand since there is no verification in DNS infrastructure, these responses can be spoofed. This is safeguarded by other protocols like HTTPS(dealt later). [DNSSEC](https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions) protects from forged or manipulated DNS responses.
+6. Stale DNS cache can be a problem. Some [apps](https://stackoverflow.com/questions/1256556/how-to-make-java-honor-the-dns-caching-timeout) might still be using expired DNS records for their API calls. This is something SRE has to be wary of when doing maintenance.
+7. For DNS Loadbalancing and service discovery also, one has to understand TTL and the servers can be removed from the pool only after waiting till TTL post the changes are made to DNS records. If this is not done a certain portion of the traffic will fail as the server is removed before the TTL.
+
+With this we conclude DNS and move on to the transport layer protocol [UDP](https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/udp.md) used by DNS
 
 
 
