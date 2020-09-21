@@ -74,5 +74,45 @@ The DNS server breaks linkedin.com. to ., com., linkedin.com. and  starts DNS re
 dig +trace linkedin.com
 ```
 
+![dns-trace](https://user-images.githubusercontent.com/1917513/93773964-52782980-fc3e-11ea-8993-e75797f51ca4.gif)
+
+Here dig reaches out to one of the [a-l].root-servers.net. to find com’s authoritative NS. com’s authoritative NS is given by c.root-servers.net. Dig picks one of the authoritative NS and asks details about linkedin’s NS. Here a.gtld-servers.net gives linkedin’s NS details. Dig picks one of the nameservers from the list dns3.p09.nsone.net and finds the linkedin.com’s IP address.
+Now we need to understand how com gets to know linkedin’s NS record. NS has to be configured in the Domain registrar’s page along with the IP addresses of name servers(glue record) which is then synced with com’s Nameserver by the registrar. 
+```bash
+linkedin.com.		3600	IN	A	108.174.10.10
+```
+This DNS response has 5 fields where the first field is the request and the last field is the response. The second field is the Time to Live which says how long the DNS response is valid in seconds. In this case this mapping of linkedin.com is valid for 1 hour. This is how the resolvers and application(browser) maintain their cache. Any request for linkedin.com beyond 1 hour will be treated as a cache miss as the mapping has expired its TTL and the whole process has to be redone.
+The 4th field says the type of DNS response/request. Some of the various DNS query types are
+A, AAAA, NS, TXT, PTR, MX and CNAME. 
+- A record returns IPV4 address of the domain name 
+- AAAA record returns the IPV6 address of the domain Name
+- NS record returns the authoritative nameserver for the domain name
+- CNAME records are aliases to the domain names. Some domains point to other domain names and resolving the latter domain name gives an IP which is used as an IP for the former domain name as well. Example www.linkedin.com’s IP address is the same as 2-01-2c3e-005a.cdx.cedexis.net. 
+- For the brevity we are not discussing other DNS record types, the RFC of each of these records are available [here](https://en.wikipedia.org/wiki/List_of_DNS_record_types).
+
+```bash
+dig A linkedin.com +short
+108.174.10.10
+
+
+dig AAAA linkedin.com +short
+2620:109:c002::6cae:a0a
+
+
+dig NS linkedin.com +short
+dns3.p09.nsone.net.
+dns4.p09.nsone.net.
+dns2.p09.nsone.net.
+ns4.p43.dynect.net.
+ns1.p43.dynect.net.
+ns2.p43.dynect.net.
+ns3.p43.dynect.net.
+dns1.p09.nsone.net.
+
+dig www.linkedin.com CNAME +short
+2-01-2c3e-005a.cdx.cedexis.net.
+```
+
+
 
 
