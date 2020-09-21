@@ -3,8 +3,8 @@
 Till this point we have only got the IP address of linkedin.com. The HTML page of linkedin.com is served by HTTP protocol which the browser renders. Browser sends a HTTP request to the IP of the server determined above.
 Request has a verb GET, PUT, POST followed by a path and query parameters and lines of key value pair which gives information about the client and capabilities of the client like contents it can accept and a body (usually in POST or PUT)
 
+```bash
 # Eg run the following in your container and have a look at the headers 
-``` bash
 curl linkedin.com -v
 ```
 
