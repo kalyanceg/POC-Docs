@@ -45,7 +45,7 @@ ping 172.17.0.3
 ### Sections
 
 <details>
-<summary> [DNS](https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/dns.md) </summary>
+<summary> <a href="https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/dns.md"> DNS </a> </summary>
 <p>
 
 - Domain Names
