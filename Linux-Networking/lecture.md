@@ -16,10 +16,38 @@ This course will try to cover what happens when somebody opens linkedin.com. Thr
 
 We are not covering concepts beyond fundamentals like HTTP/2.0, QUIC, TCP congestion control protocols, Anycast, BGP, CDN, Tunnels and Multicast. We expect post this course, one has relevant basics to have a quick grasp on such concepts
 
-##Training Content
+## Training Content
 
 ### Birds eye view of the course
 
 The course covers the question “what happens when you open linkedin.com in your browser?” The course follows the flow of [TCP/IP stack](https://www.w3.org/People/Frystyk/thesis/TcpIp.html#TCPOSI).
 The course spends time on two Application layer protocols DNS and HTTP, two transport layer protocols UDP and TCP, networking layer protocol IP and Data Link Layer protocol(generic)
+
+### Lab Environment Setup
+
+1. Dockerfile for this lecture is in ./build directory.
+2. Build an image using the docker file and spawn two containers executing /bin/bash with the image.
+
+```bash
+sudo docker build -t network-demo .
+#On one terminal use this to spawn an interactive bash container
+sudo docker run -it network-demo /bin/bash
+#On another terminal run the command to spawn another container running bash
+sudo docker run -it network-demo /bin/bash
+#Find the IP of each container using ip command
+ip a
+#Make sure both containers' IPs are reachable by ping from each other, Example
+ping 172.17.0.3
+```
+### DNS
+
+#### Outline
+
+- Domain Names
+- Resolvers
+- Dig
+- Root domains & Authoritative NS
+- Types of DNS records
+
+#### Content
 
