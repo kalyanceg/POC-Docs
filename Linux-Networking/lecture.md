@@ -56,3 +56,53 @@ ping 172.17.0.3
 
 </p>
 </details>
+
+<details>
+<summary> <a href="https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/udp.md"> UDP </a> </summary>
+<p>
+
+- Multiplexing demultiplexing
+- Example socket program
+
+</p>
+</details>
+
+<details>
+<summary> <a href="https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/http.md"> HTTP </a> </summary>
+<p>
+
+- Curl
+- Request methods
+- Response codes
+- 1.0 vs 1.1
+- Stateless and cookies
+- Man in the middle- HTTPS
+
+</p>
+</details>
+
+<details>
+<summary> <a href="https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/tcp.md"> TCP </a> </summary>
+<p>
+
+- Sequence numbers
+- 3 way handshake - retransmits
+- Flow control
+- Congestion control
+- Socket close/tearing down connection
+
+</p>
+</details>
+
+<details>
+<summary> <a href="https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/ipr.md"> IP Routing and Data Link Layer </a> </summary>
+<p>
+
+- Routing table lookup
+- ARP
+- Link layer routing
+
+
+</p>
+</details>
+
