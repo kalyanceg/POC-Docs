@@ -12,6 +12,9 @@ tcpdump -S -i any port 80
 #Run curl on one bash session
 curl www.linkedin.com
 ```
+
+![tcpdump-3way](https://user-images.githubusercontent.com/1917513/93802948-c4ae3580-fc61-11ea-85e4-d91db304b142.gif)
+
 Here client sends a syn flag shown by [S] flag with a sequence number 3538659162. The server acknowledges receipt of SYN with an ack [.] flag and a Syn flag for its sequence number[S]. The server uses the sequence number 452899268 and acknowledges the client it’s expecting sequence number 3538659163 (client sequence+1). Client sends a zero length acknowledgement packet to the server(server sequence+1) and connection stands established. This is called three way handshake. The client sends a 80 bytes length packet after this and increments its sequence number by 80. Server sends a 315 byte response and closes the connection. This was the difference we were talking about between HTTP/1.1 and HTTP/1.0. In HTTP/1.1 this same connection can be reused which reduces overhead of 3 way handshake for each HTTP request. If a packet is missed between client and server, server won’t send an ack for the client and client would retry sending the packet till the ACK is received. This guarantees reliability. 
 
 The flow control is established by the win size field in each segment. The win size says available TCP buffer length in the kernel which can be used to buffer received segments. A size 0 means the receiver has a lot of lag to catch from its socket buffer and the sender has to pause sending packets so that receiver can cope up. This flow control protects from slow receiver and fast sender problem
