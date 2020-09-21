@@ -46,8 +46,8 @@ ping 172.17.0.3
 [DNS](https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/dns.md)
 
 <details>
+<summary> DNS Outline </summary>
 <p>
- Outline
 
 - Domain Names
 - Resolvers
