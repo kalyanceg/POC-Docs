@@ -40,7 +40,7 @@ ip a
 ping 172.17.0.3
 ```
 
-![Illustration Video 1](https://drive.google.com/file/d/1hJ5np6v1-m4SSqdXT8cen8ycNDDCYAxC/preview)
+![Illustration Video 1](https://doc-10-8k-docs.googleusercontent.com/docs/securesc/bf3kj85hln2smhdenmaqkol8hgmsqvge/pt9vlno0r14guf4b8do7u9rqol9tnk9j/1600685100000/16559088737999272445/16559088737999272445/1hJ5np6v1-m4SSqdXT8cen8ycNDDCYAxC?e=view&authuser=0&nonce=vjrqvjapui8ha&user=16559088737999272445&hash=4us34ckna3r5daksac0rn66q32d41emm)
 
 ### DNS
 
