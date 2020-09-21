@@ -39,6 +39,9 @@ ip a
 #Make sure both containers' IPs are reachable by ping from each other, Example
 ping 172.17.0.3
 ```
+
+![Illustration Video 1](https://drive.google.com/file/d/1Bun3huYDG-RFuLwx2HubyzPyCjKxxzUq/view?usp=sharing)
+
 ### DNS
 
 #### Outline
