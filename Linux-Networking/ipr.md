@@ -21,7 +21,7 @@ One weird gateway we saw in the routing table is 0.0.0.0. This gateway means no 
 
 As we followed in other modules, lets complete this session with SRE usecases
 
-## SRE usecase
+## SRE Usecase
 1. Generally the routing table is populated by DHCP and playing around is not a good practice. There can be reasons where one has to play around the routing table but take that path only when it's absolutely necessary
 2. Understanding error messages better like, “No route to host” error can mean mac address of the destination host is not found and it can mean the destination host is down 
 3. On rare cases looking at the ARP table can help us understand if there is a IP conflict where same IP is assigned to two hosts by mistake and this is causing unexpected behavior
@@ -31,5 +31,5 @@ With this we have traversed through the TCP/IP stack completely. We hope there w
 # Post Training Exercises
 1. Setup own DNS resolver in the dev environment which acts as an authoritative DNS server for example.com and forwarder for other domains. Update resolv.conf to use the new DNS resolver running in localhost
 2. Set up a site dummy.example.com in localhost and run a webserver with a self signed certificate. Update the trusted CAs or pass self signed CA’s public key as a parameter so that curl https://dummy.example.com -v works properly without self signed cert warning
-3. qUpdate the routing table to use another host(container/VM) in the same network as a gateway for 8.8.8.8/32 and run ping 8.8.8.8. Do the packet capture on the new gateway to see L3 hop is working as expected(might need to disable icmp_redirect)
+3. Update the routing table to use another host(container/VM) in the same network as a gateway for 8.8.8.8/32 and run ping 8.8.8.8. Do the packet capture on the new gateway to see L3 hop is working as expected(might need to disable icmp_redirect)
  
