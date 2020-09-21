@@ -12,4 +12,14 @@ This course requires high level knowledge of commonly used jargons in TCP/IP sta
 
 This course will try to cover what happens when somebody opens linkedin.com. Throughout the journey, the course covers how an SRE can optimize the system to improve her webstack performance and troubleshoot if there is an issue in any of the layers of networking stack. This course tries to dig through each layer of traditional TCP/IP stack and expects an SRE to have a picture beyond bird’s eye view of the functioning of the Internet
 
+## What is not covered under this training
+
+We are not covering concepts beyond fundamentals like HTTP/2.0, QUIC, TCP congestion control protocols, Anycast, BGP, CDN, Tunnels and Multicast. We expect post this course, one has relevant basics to have a quick grasp on such concepts
+
+##Training Content
+
+### Birds eye view of the course
+
+The course covers the question “what happens when you open linkedin.com in your browser?” The course follows the flow of [TCP/IP stack](https://www.w3.org/People/Frystyk/thesis/TcpIp.html#TCPOSI).
+The course spends time on two Application layer protocols DNS and HTTP, two transport layer protocols UDP and TCP, networking layer protocol IP and Data Link Layer protocol(generic)
 
