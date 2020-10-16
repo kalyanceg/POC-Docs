@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>TCP - My Docs</title>
+        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap-3.0.3.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+
+                <!-- Collapsed navigation -->
+                <div class="navbar-header">
+                    <!-- Expander button -->
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="..">My Docs</a>
+                </div>
+
+                <!-- Expanded navigation -->
+                <div class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li >
+                                <a href="../Intro/">Intro</a>
+                            </li>
+                            <li >
+                                <a href="../dns/">DNS</a>
+                            </li>
+                            <li >
+                                <a href="../udp/">UDP</a>
+                            </li>
+                            <li >
+                                <a href="../http/">HTTP</a>
+                            </li>
+                            <li class="active">
+                                <a href="./">TCP</a>
+                            </li>
+                            <li >
+                                <a href="../ipr/">IP Routing</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li >
+                                <a rel="next" href="../http/">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li >
+                                <a rel="prev" href="../ipr/">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#tcp">TCP</a></li>
+            <li><a href="#sre-usecases">SRE Usecases</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="tcp">TCP</h1>
+<p>TCP is a transport layer protocol like UDP but it guarantees reliability, flow control and congestion control.
+TCP guarantees reliable delivery by using sequence numbers. A TCP connection is established by a three way handshake. In our case, the client sends a SYN packet along with the starting sequence number it plans to use, the server acknowledges the SYN packet and sends a SYN with its sequence number. Once the client acknowledges the syn packet, the connection is established. Each data transferred from here on is considered delivered reliably once acknowledgement for that sequence is received by the concerned party</p>
+<p>Thanks to wikipedia for this three way handshake illustration
+<img alt="3-way handshake" src="https://upload.wikimedia.org/wikipedia/commons/f/f0/Three-way-handshake-example.gif" /></p>
+<pre><code class="bash">#To understand handshake run packet capture on one bash session
+tcpdump -S -i any port 80
+#Run curl on one bash session
+curl www.linkedin.com
+</code></pre>
+
+<p><img alt="tcpdump-3way" src="https://user-images.githubusercontent.com/1917513/93802948-c4ae3580-fc61-11ea-85e4-d91db304b142.gif" /></p>
+<p>Here client sends a syn flag shown by [S] flag with a sequence number 3538659162. The server acknowledges receipt of SYN with an ack [.] flag and a Syn flag for its sequence number[S]. The server uses the sequence number 452899268 and acknowledges the client it’s expecting sequence number 3538659163 (client sequence+1). Client sends a zero length acknowledgement packet to the server(server sequence+1) and connection stands established. This is called three way handshake. The client sends a 80 bytes length packet after this and increments its sequence number by 80. Server sends a 315 byte response and closes the connection. This was the difference we were talking about between HTTP/1.1 and HTTP/1.0. In HTTP/1.1 this same connection can be reused which reduces overhead of 3 way handshake for each HTTP request. If a packet is missed between client and server, server won’t send an ack for the client and client would retry sending the packet till the ACK is received. This guarantees reliability. </p>
+<p>The flow control is established by the win size field in each segment. The win size says available TCP buffer length in the kernel which can be used to buffer received segments. A size 0 means the receiver has a lot of lag to catch from its socket buffer and the sender has to pause sending packets so that receiver can cope up. This flow control protects from slow receiver and fast sender problem</p>
+<p>TCP also does congestion control which determines how many segments can be in transit without an ack. Linux provides us the ability to configure algorithms for congestion control which we are not covering here.</p>
+<p>While closing a connection, client/server calls a close syscall. Let's assume client do that. Client’s kernel will send a FIN packet to the server. Server’s kernel can’t close the connection till the close syscall is called by the server application. Once server app calls close server also sends a FIN packet and client enters into time wait state for 2*MSS(120s) so that this socket can’t be reused for that time period to prevent any TCP state corruptions due to stray stale packets. </p>
+<p>Thanks to wikipedia for this connection tearing illustration
+<img alt="Connection tearing" src="https://upload.wikimedia.org/wikipedia/commons/5/55/TCP_CLOSE.svg" /></p>
+<p>Armed with our TCP and HTTP knowledge lets see how this is used by SREs in their role</p>
+<h2 id="sre-usecases">SRE Usecases</h2>
+<ol>
+<li>Scaling HTTP performance using load balancers need consistent knowledge about both TCP and HTTP. There are <a href="https://blog.envoyproxy.io/introduction-to-modern-network-load-balancing-and-proxying-a57f6ff80236?gi=428394dbdcc3">different kinds of load balancing</a> like L4, L7 load balancing, Direct Server Return etc. HTTPs offloading can be done on Load balancer or directly on servers based on the performance and compliance needs.</li>
+<li>Tweaking sysctl variables for rmem and wmem like we did for UDP can improve throughput of sender and receiver.</li>
+<li>Sysctl variable tcp_max_syn_backlog and socket variable somax_conn determines how many connections for which the kernel can complete 3 way handshake before app calling accept syscall. This is much useful in single threaded applications. Once the backlog is full, new connections stay in SYN_RCVD state (when you run netstat) till the application calls accept syscall</li>
+<li>Apps can run out of file descriptors if there are too many short lived connections. Digging through <a href="http://lxr.linux.no/linux+v3.2.8/Documentation/networking/ip-sysctl.txt#L464">tcp_reuse and tcp_recycle</a> can help reduce time spent in the time wait state(it has its own risk). Making apps reuse a pool of connections instead of creating ad hoc connection can also help</li>
+<li>Understanding performance bottlenecks by seeing metrics and classifying whether its a problem in App or network side. Example too many sockets in Close_wait state is a problem on application whereas retransmissions can be a problem more on network or on OS stack than the application itself. Understanding the fundamentals can help us narrow down where the bottleneck is</li>
+</ol>
+<p>We are close to the answer what happens when we open linkedin.com in the browser. We haven't yet dealt with how packets take multiple hops from the browser and reach Linkedin's server. This we will deal in the final section <a href="https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/ipr.md">IP Routing and Data Link Layer</a></p></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"search": 83, "next": 78, "help": 191, "previous": 80};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

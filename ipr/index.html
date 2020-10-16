@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>IP Routing - My Docs</title>
+        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap-3.0.3.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+
+                <!-- Collapsed navigation -->
+                <div class="navbar-header">
+                    <!-- Expander button -->
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="..">My Docs</a>
+                </div>
+
+                <!-- Expanded navigation -->
+                <div class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li >
+                                <a href="../Intro/">Intro</a>
+                            </li>
+                            <li >
+                                <a href="../dns/">DNS</a>
+                            </li>
+                            <li >
+                                <a href="../udp/">UDP</a>
+                            </li>
+                            <li >
+                                <a href="../http/">HTTP</a>
+                            </li>
+                            <li >
+                                <a href="../tcp/">TCP</a>
+                            </li>
+                            <li class="active">
+                                <a href="./">IP Routing</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li >
+                                <a rel="next" href="../tcp/">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="disabled">
+                                <a rel="prev" >
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#ip-routing-and-data-link-layer">IP Routing and Data Link Layer</a></li>
+            <li><a href="#sre-usecase">SRE Usecase</a></li>
+        <li class="main "><a href="#post-training-exercises">Post Training Exercises</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="ip-routing-and-data-link-layer">IP Routing and Data Link Layer</h1>
+<p>We will dig how packets that leave the client reach the server and vice versa. When the packet reaches the IP layer, the transport layer populates source port, destination port. IP/Network layer populates destination IP(discovered from DNS) and then looks up the route to the destination IP on the routing table. </p>
+<pre><code class="bash">#Linux route -n command gives the default routing table
+route -n
+</code></pre>
+
+<p><img alt="route table" src="https://user-images.githubusercontent.com/1917513/93805564-8d418800-fc65-11ea-842c-8473b4cb1638.gif" /></p>
+<p>Here the destination IP is bitwise AND’d with the Genmask and if the answer is the destination part of the table then that gateway and interface is picked for routing. Here linkedin.com’s IP 108.174.10.10 is AND’d with 255.255.255.0 and the answer we get is 108.174.10.0 which doesn’t match with any destination in the routing table. Then we AND destination IP with 0.0.0.0 and we get 0.0.0.0. This answer matches the default row</p>
+<p>Routing table is processed in the order of more octets of 1 set in genmask and genmask 0.0.0.0 is the default route if nothing matches. 
+At the end of this operation Linux figured out that the packet has to be sent to next hop 172.17.0.1 via eth0. The source IP of the packet will be set as the IP of interface eth0. 
+Now to send the packet to 172.17.0.1 linux has to figure out the MAC address of 172.17.0.1. MAC address is figured by looking at the internal arp cache which stores translation between IP address and MAC address. If there is a cache miss, Linux broadcasts ARP request within the internal network asking who has 172.17.0.1. The owner of the IP sends an ARP response which is cached by the kernel and the kernel sends the packet to the gateway by setting Source mac address as mac address of eth0 and destination mac address of 172.17.0.1 which we got just now. Similar routing lookup process is followed in each hop till the packet reaches the actual server. Transport layer and layers above it come to play only at end servers. During intermediate hops only till the IP/Network layer is involved.</p>
+<p><img alt="Screengrab for above explanation" src="https://user-images.githubusercontent.com/1917513/93805554-89ae0100-fc65-11ea-93bd-d548f3f721f3.gif" /></p>
+<p>One weird gateway we saw in the routing table is 0.0.0.0. This gateway means no Layer3(Network layer) hop is needed to send the packet. Both source and destination are in the same network. Kernel has to figure out the mac of the destination and populate source and destination mac appropriately and send the packet out so that it reaches the destination without any Layer3 hop in the middle</p>
+<p>As we followed in other modules, lets complete this session with SRE usecases</p>
+<h2 id="sre-usecase">SRE Usecase</h2>
+<ol>
+<li>Generally the routing table is populated by DHCP and playing around is not a good practice. There can be reasons where one has to play around the routing table but take that path only when it's absolutely necessary</li>
+<li>Understanding error messages better like, “No route to host” error can mean mac address of the destination host is not found and it can mean the destination host is down </li>
+<li>On rare cases looking at the ARP table can help us understand if there is a IP conflict where same IP is assigned to two hosts by mistake and this is causing unexpected behavior</li>
+</ol>
+<p>With this we have traversed through the TCP/IP stack completely. We hope there will be a different perspective when one opens any website in the browser post the course. </p>
+<h1 id="post-training-exercises">Post Training Exercises</h1>
+<ol>
+<li>Setup own DNS resolver in the dev environment which acts as an authoritative DNS server for example.com and forwarder for other domains. Update resolv.conf to use the new DNS resolver running in localhost</li>
+<li>Set up a site dummy.example.com in localhost and run a webserver with a self signed certificate. Update the trusted CAs or pass self signed CA’s public key as a parameter so that curl https://dummy.example.com -v works properly without self signed cert warning</li>
+<li>Update the routing table to use another host(container/VM) in the same network as a gateway for 8.8.8.8/32 and run ping 8.8.8.8. Do the packet capture on the new gateway to see L3 hop is working as expected(might need to disable icmp_redirect)</li>
+</ol></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"search": 83, "next": 78, "help": 191, "previous": 80};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

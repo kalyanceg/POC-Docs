@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>DNS - My Docs</title>
+        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap-3.0.3.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+
+                <!-- Collapsed navigation -->
+                <div class="navbar-header">
+                    <!-- Expander button -->
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="..">My Docs</a>
+                </div>
+
+                <!-- Expanded navigation -->
+                <div class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li >
+                                <a href="../Intro/">Intro</a>
+                            </li>
+                            <li class="active">
+                                <a href="./">DNS</a>
+                            </li>
+                            <li >
+                                <a href="../udp/">UDP</a>
+                            </li>
+                            <li >
+                                <a href="../http/">HTTP</a>
+                            </li>
+                            <li >
+                                <a href="../tcp/">TCP</a>
+                            </li>
+                            <li >
+                                <a href="../ipr/">IP Routing</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li >
+                                <a rel="next" href="../Intro/">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li >
+                                <a rel="prev" href="../udp/">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#dns">DNS</a></li>
+            <li><a href="#sre-usecases">SRE Usecases</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="dns">DNS</h1>
+<p>Domain Names are simpler human readable names for websites. The Internet understands only IP addresses, but since memorizing incoherent numbers is difficult simple domain names are used instead. These domain names are translated into IP addresses by the DNS infrastructure. When somebody tries to open linkedin.com in the browser, the browser tries to convert linkedin.com to IP Address. This process is called DNS resolution. A simple pseudocode looks this</p>
+<pre><code class="python">ip, err = getIPAddress(domainName)
+if err:
+  print(“unknown Host Exception while trying to resolve:%s”.format(domainName))
+</code></pre>
+
+<p>Now let’s try to understand what happens inside the getIPAddress function. The browser would have a dns cache of its own where it checks if there is a mapping for the domainName if there is a matching available, then the browser uses that IP address. If there is no mapping, the browser calls gethostbyname syscall to ask the Operating system to find the IP address for a given DomainName</p>
+<pre><code class="python">def getIPAddress(domainName):
+    resp, fail = lookupCache(domainName)
+    If not fail:
+       return resp
+    else:
+       resp, err = gethostbyname(domainName)
+       if err:
+         return null, err
+       else:
+          return resp
+</code></pre>
+
+<p>Now lets understand what Operating system kernel does when the gethostbyname function is called. The Linux operating system looks at the file <a href="https://man7.org/linux/man-pages/man5/nsswitch.conf.5.html">/etc/nsswitch.conf</a> file which usually has a line</p>
+<pre><code class="bash">hosts:      files dns
+</code></pre>
+
+<p>This line means the host lookup has to look up first in file (/etc/hosts) and then use DNS protocol to do the resolution if there is no match in /etc/hosts. The file /etc/hosts is of format
+IPAddress FQDN[,FQDN]</p>
+<pre><code class="bash">127.0.0.1 localhost.localdomain localhost
+::1 localhost.localdomain localhost
+</code></pre>
+
+<p>If a match exists for a domain in this file then that IP address is returned by the OS. Lets add a line to this file</p>
+<pre><code class="bash">127.0.0.1 test.linkedin.com
+</code></pre>
+
+<p>And then do ping test.linkedin.com</p>
+<pre><code class="bash">ping test.linkedin.com -n
+</code></pre>
+
+<p><img alt="dns-ping" src="https://user-images.githubusercontent.com/1917513/93765030-dbd52f00-fc31-11ea-992e-d45c2423179d.gif" /></p>
+<p>If no match exists in /etc/hosts, the OS tries to do a DNS resolution using DNS protocol. The linux system makes a DNS request to the first IP in /etc/resolv.conf. If there is no response, requests will be sent to subsequent servers in resolv.conf. These servers in resolv.conf are called DNS resolvers. The DNS resolvers are populated by <a href="https://en.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol">DHCP</a> when an IP address is assigned dynamically as the device connects to the network or statically configured by an administrator manually or using a config management system. 
+<a href="https://linux.die.net/man/1/dig">Dig</a> is a userspace DNS system which creates requests and sends to DNS resolvers and prints the response to the console.</p>
+<pre><code class="bash">#run this command in one container's bash to capture all DNS requests
+sudo tcpdump -s 0 -A -i any port 53
+#exec bash into the same container
+sudo docker exec -it 1cfec84d0b3a /bin/bash
+#make a dig request from the newly spawned bash
+dig linkedin.com
+</code></pre>
+
+<p><img alt="dns-tcpdump" src="https://user-images.githubusercontent.com/1917513/93766667-5ef78480-fc34-11ea-86c6-c0ee807829e5.gif" /></p>
+<p>The packet capture shows a request is made to 192.168.65.1:53 (this is the resolver in /etc/resolv.conf) for linkedin.com and a response is received from 192.168.65.1 with the IP address of linkedin.com 108.174.10.10</p>
+<p>Now let's try to understand how DNS resolver tries to find the IP address of linkedin.com. DNS resolver first looks at its cache. Since many devices in the network can query for the domain name linkedin.com, there might be a hit in the cache. If it is a cache miss, it starts the DNS resolution process.
+The DNS server breaks linkedin.com. to ., com., linkedin.com. and  starts DNS resolution from ‘.’. The . is called root domain and those IPs are known to the DNS resolver software. DNS resolver software asks root domain Nameservers who the right person would be to respond to details about ‘com.’. The authoritative nameserver of ‘com.’ will be given. Now the DNS resolution service will contact com’s authoritative nameserver to give the authoritative nameserver for linkedin.com. Once linkedin.com’s authoritative nameserver is known, the resolver asks Linkedin’s NS to provide IP address for linkedin.com. This whole process can be visualized by running dig +trace linkedin.com</p>
+<pre><code class="bash">dig +trace linkedin.com
+</code></pre>
+
+<p><img alt="dns-trace" src="https://user-images.githubusercontent.com/1917513/93773964-52782980-fc3e-11ea-8993-e75797f51ca4.gif" /></p>
+<p>Here dig reaches out to one of the [a-l].root-servers.net. to find com’s authoritative NS. com’s authoritative NS is given by c.root-servers.net. Dig picks one of the authoritative NS and asks details about linkedin’s NS. Here a.gtld-servers.net gives linkedin’s NS details. Dig picks one of the nameservers from the list dns3.p09.nsone.net and finds the linkedin.com’s IP address.
+Now we need to understand how com gets to know linkedin’s NS record. NS has to be configured in the Domain registrar’s page along with the IP addresses of name servers(glue record) which is then synced with com’s Nameserver by the registrar. </p>
+<pre><code class="bash">linkedin.com.       3600    IN  A   108.174.10.10
+</code></pre>
+
+<p>This DNS response has 5 fields where the first field is the request and the last field is the response. The second field is the Time to Live which says how long the DNS response is valid in seconds. In this case this mapping of linkedin.com is valid for 1 hour. This is how the resolvers and application(browser) maintain their cache. Any request for linkedin.com beyond 1 hour will be treated as a cache miss as the mapping has expired its TTL and the whole process has to be redone.
+The 4th field says the type of DNS response/request. Some of the various DNS query types are
+A, AAAA, NS, TXT, PTR, MX and CNAME. 
+- A record returns IPV4 address of the domain name 
+- AAAA record returns the IPV6 address of the domain Name
+- NS record returns the authoritative nameserver for the domain name
+- CNAME records are aliases to the domain names. Some domains point to other domain names and resolving the latter domain name gives an IP which is used as an IP for the former domain name as well. Example www.linkedin.com’s IP address is the same as 2-01-2c3e-005a.cdx.cedexis.net. 
+- For the brevity we are not discussing other DNS record types, the RFC of each of these records are available <a href="https://en.wikipedia.org/wiki/List_of_DNS_record_types">here</a>.</p>
+<pre><code class="bash">dig A linkedin.com +short
+108.174.10.10
+
+
+dig AAAA linkedin.com +short
+2620:109:c002::6cae:a0a
+
+
+dig NS linkedin.com +short
+dns3.p09.nsone.net.
+dns4.p09.nsone.net.
+dns2.p09.nsone.net.
+ns4.p43.dynect.net.
+ns1.p43.dynect.net.
+ns2.p43.dynect.net.
+ns3.p43.dynect.net.
+dns1.p09.nsone.net.
+
+dig www.linkedin.com CNAME +short
+2-01-2c3e-005a.cdx.cedexis.net.
+</code></pre>
+
+<p>Armed with these fundamentals of DNS lets see usecases where DNS is used by SREs.</p>
+<h2 id="sre-usecases">SRE Usecases</h2>
+<ol>
+<li>Every company has to have their internal DNS infrastructure for intranet sites and internal services like databases and stuff. So there has to be a DNS infra maintained for those domain names by the infrastructure team. This DNS infra has to be optimized and scaled so that it doesn’t become a single point of failure. Failure of the internal DNS infrastructure can cause API calls of microservices to fail and other cascading effect.</li>
+<li>DNS can also be used for discovering services. For example the hostname serviceb.internal.example.com could list instances which run serviceb internally in example.com company. Cloud providers provide options to enable DNS discovery(<a href="https://docs.aws.amazon.com/whitepapers/latest/microservices-on-aws/service-discovery.html#dns-based-service-discovery">example</a>)</li>
+<li>DNS is used by cloud providers and CDN providers to scale their services. In Azure/AWS, Load Balancers are given a CNAME instead of IPAddress. They update the IPAddress of the Loadbalancers as they scale by changing the IP Address of alias domain names. This is one of the reasons why A records of such alias domains (Eg www-linkedin-com.l-0005.l-msedge.net. above) are short lived like 1 minute.</li>
+<li>DNS can also be used to make clients get IP addresses closer to their location so that their HTTP calls can be responded faster if the company has a presence geographically distributed. </li>
+<li>SRE also has to understand since there is no verification in DNS infrastructure, these responses can be spoofed. This is safeguarded by other protocols like HTTPS(dealt later). <a href="https://en.wikipedia.org/wiki/Domain_Name_System_Security_Extensions">DNSSEC</a> protects from forged or manipulated DNS responses.</li>
+<li>Stale DNS cache can be a problem. Some <a href="https://stackoverflow.com/questions/1256556/how-to-make-java-honor-the-dns-caching-timeout">apps</a> might still be using expired DNS records for their API calls. This is something SRE has to be wary of when doing maintenance.</li>
+<li>For DNS Loadbalancing and service discovery also, one has to understand TTL and the servers can be removed from the pool only after waiting till TTL post the changes are made to DNS records. If this is not done a certain portion of the traffic will fail as the server is removed before the TTL.</li>
+</ol>
+<p>With this we conclude DNS and move on to the transport layer protocol <a href="https://github.com/kalyanceg/POC-Docs/blob/master/Linux-Networking/udp.md">UDP</a> used by DNS</p></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"search": 83, "next": 78, "help": 191, "previous": 80};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
